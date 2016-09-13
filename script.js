@@ -1,11 +1,12 @@
 $(function () {
-    var EVENTS_CHANNEL = "pubnub_demo_api_python_events",
-        PUBLISH_SYNC_PATH = '/subscription/publish/sync',
-        PUBLISH_ASYNC_PATH = '/subscription/publish/async',
-        PUBLISH_ASYNC2_PATH = '/subscription/publish/async2',
+    var PUBLISH_SYNC_PATH = '/publish/sync',
+        PUBLISH_ASYNC_PATH = '/publish/async',
+        PUBLISH_ASYNC2_PATH = '/publish/async2',
         SUBSCRIPTION_ADD_PATH = '/subscription/add',
         SUBSCRIPTION_REMOVE_PATH = '/subscription/remove',
         SUBSCRIPTION_LIST_PATH = '/subscription/list',
+        APP_KEY_PATH = '/app_key',
+        currentKey,
         apiUrl;
 
     var pubnub = new PubNub({
@@ -21,14 +22,24 @@ $(function () {
             presence(JSON.stringify(presenceEvent))
         },
         message: function (message) {
-            console.log('hey');
-            status(JSON.stringify(message))
+            status(message)
         }
     });
 
-    pubnub.subscribe({
-        channels: [EVENTS_CHANNEL ]
-    });
+    function connectEndpoint() {
+        $.get(apiUrl + APP_KEY_PATH)
+            .done(function(msg) {
+                pubnub.unsubscribe({channels: ['status-' + currentKey]});
+                currentKey = msg.app_key;
+                output("New key: " + JSON.stringify(msg.app_key));
+                pubnub.subscribe({
+                    channels: ['status-' + currentKey]
+                });
+            })
+            .fail(function(e) {
+                output("Error: " + JSON.stringify(e))
+            })
+    }
 
     $("#add-channel-button").on('click', function (e) {
         e.preventDefault();
@@ -114,6 +125,7 @@ $(function () {
         } else {
             apiUrl = $("custom-api-url").val()
         }
+        connectEndpoint();
     }).change();
 
     $("#clear-output").on('click', function (e) {
