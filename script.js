@@ -22,7 +22,7 @@ $(function () {
             presence(JSON.stringify(presenceEvent))
         },
         message: function (message) {
-            status(message)
+            status(JSON.stringify(message))
         }
     });
 
